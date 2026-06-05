@@ -9,7 +9,7 @@
 
 **Self-hosted license & activation service for all Nerdsmiths software — macOS and Windows.**
 
-![Status](https://img.shields.io/badge/status-L1%20in%20development-orange?style=for-the-badge)
+![Status](https://img.shields.io/badge/status-L1%20complete-green?style=for-the-badge)
 ![Engine](https://img.shields.io/badge/engine-Keygen%20CE-00ff41?style=for-the-badge)
 ![Self-hosted](https://img.shields.io/badge/self--hosted-yes-blue?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-Proprietary-lightgrey?style=for-the-badge)

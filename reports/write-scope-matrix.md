@@ -19,6 +19,8 @@
 | `scripts/backup-db.sh` | quality_operations | Compose-backed Postgres backup | Medium |
 | `scripts/restore-db.sh` | quality_operations | Compose-backed Postgres restore | High |
 | `docs/ed25519-keys.md` | docs_dx | Key generation and storage guidance without committed secrets | Medium |
+| `docs/Nerdsmiths_Licensing_Standard.md` | docs_dx | L1 completion status in the company licensing standard | Low |
+| `docs/Nerdsmiths_ROADMAP.md` | docs_dx | Cross-workstream roadmap status after NerdKey L1 completion | Low |
 | `reports/*.md` | workflow_design | Agent handoffs and validation reports | Low |
 | `implementation_plan.md` | workflow_design | User-gated plan | Low |
 | `task.md` | workflow_design | Post-approval checklist | Low |

@@ -4,8 +4,12 @@
 > █ road to launch :: nerdsmiths shop
 ```
 
-**Stand:** 2026-06-05 · **Repo:** github.com/cubetribe/Nerdshmiths_LP · **Version:** v1.8.20
+**Stand:** 2026-06-06 · **Repo:** github.com/cubetribe/Nerdshmiths_LP · **Version:** v1.8.21
 **Ziel:** Vollständig getesteter Shop, der digitale ZIP-Pakete (Mac-/Windows-Apps + DevKits) verkauft.
+
+> **Fortschritt 2026-06-06:** ✅ Shop **Phase A** (digitale Auslieferung + offenes Produktmodell)
+> gemerged (PR #6, v1.8.21). ✅ Lizenz-Service **L1** (NerdKey / Keygen CE self-hosted) gebaut und
+> lokal validiert (Seat-Limit 2 bestätigt). Nächster Schritt: **L2** (Shop ↔ NerdKey verbinden).
 
 Detaillierte Aufträge inkl. Copy-Paste-Prompts für Claude Code: siehe
 `Nerdsmiths_Shop_Audit_und_ClaudeCode_Plan.md`. Diese Roadmap ist die Status-Übersicht.
@@ -31,15 +35,16 @@ Detaillierte Aufträge inkl. Copy-Paste-Prompts für Claude Code: siehe
 
 ## Phasen bis Launch
 
-### Phase A — Digitale Auslieferung & offenes Produktmodell 🟢
-**Branch:** `feat/shop-fulfillment` · **Owner:** Claude Code · **Status:** in Arbeit
-- Produktmodell von Single-Product-Literal auf offene Liste generalisieren (`productType: app|devkit`, Plattform, mehrere Assets)
-- Geschützter Asset-Speicher (`SHOP_ASSET_DIR`, außerhalb Web-Root)
-- Migration 005: `shop_download_tokens`
-- Download-Token bei Webhook-Erfolg erzeugen
-- Endpoint `GET /api/shop/licenses/:id/download` mit Entitlement- + Token-Prüfung
-- Download-UI in `ShopAccountPage` (Retro-Terminal-Stil)
-> **Begründung Priorität 1:** Ohne diese Phase bekommt ein zahlender Kunde nichts Herunterladbares.
+### Phase A — Digitale Auslieferung & offenes Produktmodell ✅
+**Status:** ✅ erledigt (PR #6, v1.8.21, 2026-06-06)
+- ✅ Produktmodell auf offene Liste generalisiert (`productType: app|devkit`, Plattform, `assets[]`; `storageKey`/`sha256` nur serverseitig)
+- ✅ Geschützter Asset-Speicher (`SHOP_ASSET_DIR`, nie statisch ausgeliefert)
+- ✅ Migration 005: `shop_download_tokens`
+- ✅ Download-Token idempotent bei Webhook-Erfolg (JSON + Postgres), Revoke bei Refund
+- ✅ Endpoint `GET /api/shop/licenses/:id/download` (Auth-before-FS, Path-Traversal-Guard, Expiry + Max-Downloads, atomares Zählen)
+- ✅ Download-UI in `ShopAccountPage` (Retro-Terminal, Expired/Limit-States)
+- ✅ Deploy-Safety: `SHOP_ASSET_DIR` Soft-Warning + 503 wenn unset; `to_regclass`-Guard für unmigrierte Prod-DB
+- Neue Env: `SHOP_ASSET_DIR`, `SHOP_DOWNLOAD_TOKEN_TTL_HOURS` (72), `SHOP_DOWNLOAD_MAX_DOWNLOADS` (10)
 
 ### Phase B — Lizenzschlüssel (Aktivierung) 🟢
 **Status:** zu eigenem Workstream aufgewertet → **Lizenz-Service** (siehe unten)
@@ -83,11 +88,13 @@ Verkaufsreife der einzelnen Repos noch nicht geprüft.
 ---
 
 ## Workstream: Lizenz-Service (produktübergreifend) 🟢
-Eigener, wiederverwendbarer Workstream (parallel zur Shop-Roadmap). Engine: **Keygen CE**
-(self-hosted, kommerziell kostenlos). Voller Bauplan: `Nerdsmiths_Licensing_Standard.md` §8.
-- ⬜ **L1** Keygen CE self-hosted aufsetzen (`nerdsmiths-licensing`)
-- ⬜ **L2** Shop ↔ Lizenz-Service verbinden (`Nerdshmiths_LP`)
-- ⬜ **L3** Client-SDK & Aktivierung (`nerdsmiths-license-kit`, Swift + .NET/C++)
+Repo: **github.com/cubetribe/nerdkey** · Engine: **Keygen CE** (self-hosted, kommerziell kostenlos).
+Voller Bauplan: `Nerdsmiths_Licensing_Standard.md` §8.
+- ✅ **L1** NerdKey / Keygen CE self-hosted (Docker-Stack, `products.yaml` + `nerdkey apply`,
+  Admin-CLI, Backup/Restore, Ed25519-Account-Keys). Lokal validiert: Seat-Limit 2 bestätigt
+  (3. Aktivierung abgelehnt), Smoke-Test grün.
+- ⬜ **L2** Shop ↔ NerdKey verbinden (`Nerdshmiths_LP`): Webhook stellt Keygen-Lizenz aus, Konto zeigt Key — **NÄCHSTER SCHRITT**
+- ⬜ **L3** Client-SDK & Aktivierung (`nerdkey-kit`, Swift + .NET/C++)
 - ⬜ **L4** Updates (Sparkle / WinSparkle)
 - ⬜👤 Plattform-Signing (macOS Developer ID/Notarisierung, Windows Authenticode)
 

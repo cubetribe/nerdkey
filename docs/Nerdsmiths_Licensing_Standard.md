@@ -194,8 +194,11 @@ Sekundär (vor/bei Phase L1 festlegen):
 > klaren Befehlen (`product add`, `apply`, `license issue|revoke|list`), Backup/Restore je ein
 > Befehl, README mit Copy-Paste-Beispielen. Messlatte: neues Produkt in < 2 Minuten, ohne API-Doku.
 
-### Phase L1 — Keygen CE self-hosted aufsetzen
-**Repo:** `nerdsmiths-licensing`
+### Phase L1 — Keygen CE self-hosted aufsetzen ✅ ERLEDIGT (2026-06-06)
+**Repo:** `github.com/cubetribe/nerdkey` · **Status:** gebaut & lokal validiert — Docker-Stack
+(Keygen API + Postgres + Redis + Caddy), `products.yaml` + `nerdkey apply` (idempotent), Admin-CLI
+(`license issue|list|validate|revoke`, `machine activate`, `checkout`), Ed25519-Account-Keys,
+Backup/Restore. Seat-Limit 2 bestätigt (3. Aktivierung abgelehnt), Smoke-Test grün.
 ```
 Ziel: Keygen CE als self-hosted Lizenz-Server produktionsreif aufsetzen.
 1. Neues Repo nerdsmiths-licensing. Keygen CE via Docker Compose (API + Postgres + Redis)

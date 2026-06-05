@@ -12,3 +12,4 @@ All notable user-facing changes to NerdKey are tracked here.
 - Add admin CLI flows for health checks, token issuing, public-key output, product registration, license issuing/listing/revocation/validation/checkout, machine activation, and the L1 smoke test.
 - Add Ed25519 key-handling documentation and database backup/restore scripts.
 - Add validation reports and a setup walkthrough for the L1 operator workflow.
+- Mark L1 complete in the README, task list, licensing standard, and roadmap.
