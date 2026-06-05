@@ -14,6 +14,8 @@
 | `products.yaml` | builder | Product registry and seat/policy single source of truth | Medium |
 | `policies/products/nerdsmiths-demo.json` | builder | Generated/reference policy-as-code for a 2-seat perpetual product | Medium |
 | `scripts/nerdkey.py` | builder | Thin `nerdkey` admin/smoke CLI over Keygen API and console bootstrap | High |
+| `scripts/nerdkey` | builder | Executable CLI wrapper | Low |
+| `scripts/init-env.sh` | runtime_platform | Local `.env` generator with non-committed secrets | Medium |
 | `scripts/backup-db.sh` | quality_operations | Compose-backed Postgres backup | Medium |
 | `scripts/restore-db.sh` | quality_operations | Compose-backed Postgres restore | High |
 | `docs/ed25519-keys.md` | docs_dx | Key generation and storage guidance without committed secrets | Medium |

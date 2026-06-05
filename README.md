@@ -18,145 +18,251 @@
 
 ---
 
-## What is NerdKey?
+## What Is NerdKey?
 
-NerdKey is the central, **product-agnostic** licensing and activation service behind every
-Nerdsmiths product. One system issues, activates, and revokes licenses for **all** our macOS and
-Windows apps — fully self-hosted, with no third-party SaaS lock-in.
+NerdKey is the central, product-agnostic licensing and activation service behind Nerdsmiths products.
+It self-hosts [Keygen CE](https://keygen.sh/docs/self-hosting/) and adds a thin config-driven CLI so day-to-day licensing does not require opening the Keygen API docs.
 
-It is built on **[Keygen CE](https://keygen.sh)** (self-hosted, commercially free) and adds a thin,
-config-driven admin layer on top so that day-to-day licensing is trivial.
+Out of scope for L1: Stripe/shop integration, client SDKs, and auto-updates.
 
-> **One repo. Every product. Self-hosted. No lock-in.**
+## Requirements
 
----
+- Docker with Docker Compose
+- Python 3
+- OpenSSL
+- `curl`
+- `jq` for inspecting JSON responses
 
-## ⭐ Design Goal: add a license in under 2 minutes
+The Keygen image is pinned to `keygen/api:v1.6`, matching the current self-hosted release line `v1.6.0`.
 
-The single most important requirement: licensing must be **effortless** in daily use.
+## Quick Start
 
-- **Add a new product / license = one config entry + one command.**
-  A new block in `products.yaml` → `nerdkey apply`.
-- **One central, well-commented config file** (`products.yaml`) as the single source of truth for
-  every product, seat count, and license model.
-- **A clear admin CLI**: `nerdkey product add`, `nerdkey apply`,
-  `nerdkey license issue | revoke | list`.
-- **Idempotent & repeatable** — re-running `apply` changes nothing unexpectedly.
-- **Documented** — copy-paste examples for the five most common tasks.
-
-The benchmark: a new product is live in **under two minutes, without opening the Keygen API docs.**
-
----
-
-## Architecture principles
-
-- **Offline-first.** Each license is an **Ed25519-signed file**; the app verifies the signature
-  locally on every launch, with a periodic online re-check (3–7 days) and a grace period.
-- **Seat model.** Activation binds a license to a machine fingerprint; the server enforces the seat
-  limit (default **2** devices). Deactivating frees a seat.
-- **Signing keys never touch the web/download server** — they live in operator-managed secrets,
-  never in Git.
-- **Refund → revoke.** Wired to the shop's Stripe `charge.refunded` flow (later phase).
-- **Platform code-signing** (macOS Developer ID/notarization, Windows Authenticode) is handled at
-  the app level — out of scope for NerdKey.
-
----
-
-## How it will work (target usage)
-
-> Target developer experience. Phase L1 is being implemented now — see **Status** below.
+Create the local environment file. This generates local-only secrets and writes them to ignored `.env`.
 
 ```bash
-# 1. Bring up the self-hosted Keygen CE stack
+scripts/init-env.sh
+```
+
+Start Keygen setup. This creates the Keygen account, admin user, database schema, and Keygen account signing keys.
+
+```bash
+docker compose --profile setup run --rm setup
+```
+
+Start the stack.
+
+```bash
 docker compose up -d
-
-# 2. Define a product once, in products.yaml
-#    - slug: polywavconverter
-#      seats: 2
-#      model: perpetual
-
-# 3. Apply the config (idempotent)
-nerdkey apply
-
-# 4. Issue, list, and revoke licenses
-nerdkey license issue  --product polywavconverter --email kunde@example.com
-nerdkey license list   --product polywavconverter
-nerdkey license revoke --key XXXX-XXXX-XXXX-XXXX
 ```
 
----
+Check health.
 
-## Planned repository layout
-
+```bash
+curl -k https://nerdkey.localhost/v1/health
+scripts/nerdkey health
 ```
+
+Generate and save the admin API token into ignored `.env`.
+
+```bash
+scripts/nerdkey token issue --save
+```
+
+Apply the product registry.
+
+```bash
+scripts/nerdkey apply
+```
+
+Run the full local smoke test. It applies the demo product, issues a license, activates two seats, confirms the third seat is rejected, lists licenses, and revokes the smoke license.
+
+```bash
+scripts/nerdkey smoke
+```
+
+## Product Registry
+
+`products.yaml` is the single source of truth. A product is added once, then applied idempotently.
+
+```bash
+scripts/nerdkey product add \
+  --slug polywavconverter \
+  --name PolyWavConverter \
+  --url https://nerdsmiths.de \
+  --seats 2
+
+scripts/nerdkey apply --product polywavconverter
+```
+
+The default policy is:
+
+- perpetual
+- Ed25519 signed license keys/files via Keygen account signing keys
+- 2 machine seats
+- strict machine-limit enforcement
+- license-key authentication for machine activation
+- fingerprint scope required
+- no machine overage
+
+Keygen requires `floating=true` for `maxMachines > 1`; NerdKey uses strict floating machine leasing to implement the requested 2-seat model.
+
+## Common Tasks
+
+Issue a license.
+
+```bash
+scripts/nerdkey license issue \
+  --product nerdsmiths-demo \
+  --email kunde@example.com
+```
+
+List licenses.
+
+```bash
+scripts/nerdkey license list --product nerdsmiths-demo
+```
+
+Activate a machine seat.
+
+```bash
+scripts/nerdkey machine activate \
+  --license <license-id> \
+  --fingerprint office-macbook-pro \
+  --platform macOS
+```
+
+Validate a license for an activated machine.
+
+```bash
+scripts/nerdkey license validate \
+  --key '<license-key>' \
+  --fingerprint office-macbook-pro
+```
+
+Revoke a license.
+
+```bash
+scripts/nerdkey license revoke <license-id-or-key>
+```
+
+Check out a signed license-file response for offline/client validation workflows.
+
+```bash
+scripts/nerdkey license checkout <license-id-or-key> \
+  --output licenses/customer.lic.json
+```
+
+`licenses/` is ignored by Git.
+
+## Ed25519 Keys
+
+Keygen creates the account Ed25519 signing keypair during setup. The private key is encrypted in the Keygen database using the encryption secrets from `.env`; it must never be copied into this repo or onto the download/web server.
+
+Print the public key that later goes into apps:
+
+```bash
+scripts/nerdkey account public-key
+```
+
+More detail: [`docs/ed25519-keys.md`](docs/ed25519-keys.md).
+
+## Backup And Restore
+
+Create a database backup.
+
+```bash
+scripts/backup-db.sh backups/nerdkey-$(date +%Y%m%d%H%M%S).dump
+```
+
+Restore a local database backup. Restore is destructive and requires an explicit confirmation variable.
+
+```bash
+NERDKEY_RESTORE_CONFIRM=replace-local-db \
+  scripts/restore-db.sh backups/nerdkey-example.dump
+```
+
+Backups are ignored by Git. Treat backups as sensitive because the Keygen database contains encrypted signing material and license/customer data.
+
+## Environment Variables
+
+Start from `.env.example`. Required values are generated by `scripts/init-env.sh`:
+
+- `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
+- `SECRET_KEY_BASE`
+- `ENCRYPTION_DETERMINISTIC_KEY`
+- `ENCRYPTION_PRIMARY_KEY`
+- `ENCRYPTION_KEY_DERIVATION_SALT`
+- `KEYGEN_ACCOUNT_ID`
+- `KEYGEN_ADMIN_EMAIL`
+- `KEYGEN_ADMIN_PASSWORD`
+- `KEYGEN_ADMIN_TOKEN` after `scripts/nerdkey token issue --save`
+
+Local defaults:
+
+- `KEYGEN_HOST=nerdkey.localhost`
+- `NERDKEY_BASE_URL=https://nerdkey.localhost`
+- `NERDKEY_TLS_VERIFY=false` because local Caddy uses an internal certificate
+
+Production should use a real DNS name, HTTPS certificate, operator-managed secrets, and a managed backup policy.
+
+## Architecture Principles
+
+- Offline-first via Keygen Ed25519 signed license artifacts.
+- Seat model via machine activation and server-enforced machine limits.
+- Signing keys never in Git and never on the download/web server.
+- Admin tokens only in `.env`.
+- Policy-as-code from `products.yaml`.
+
+## Repository Layout
+
+```text
 nerdkey/
-├── docker-compose.yml     # local Keygen CE stack (API + Postgres + Redis)
-├── config/                # reverse-proxy / runtime config (safe to commit)
-├── products.yaml          # single source of truth for all products & seats
-├── policies/              # policy-as-code templates per product
-├── scripts/               # thin operator / admin scripts (the nerdkey CLI)
-├── docs/                  # setup, operations, backup/restore, key management
-└── reports/               # workflow handoff & validation reports
+├── docker-compose.yml
+├── compose/Caddyfile
+├── products.yaml
+├── policies/products/
+├── scripts/
+├── docs/
+└── reports/
 ```
 
----
+## Validation
 
-## Roadmap
+Static checks:
 
-| Phase | Scope | Status |
-|-------|-------|--------|
-| **L1** | Self-host Keygen CE, `products.yaml` + `apply`, admin CLI, backup/restore | 🟢 in development |
-| **L2** | Shop integration (`Nerdshmiths_LP`): Stripe webhook issues licenses | ⬜ planned |
-| **L3** | Client SDK (`nerdkey-kit`): Swift + .NET/C++, activation & launch check | ⬜ planned |
-| **L4** | Auto-updates: Sparkle (macOS) + WinSparkle (Windows), signed appcasts | ⬜ planned |
+```bash
+docker compose config
+python3 -m py_compile scripts/nerdkey.py
+bash -n scripts/*.sh scripts/nerdkey
+shellcheck scripts/*.sh scripts/nerdkey
+```
 
-Full plan: [`docs/Nerdsmiths_Licensing_Standard.md`](docs/Nerdsmiths_Licensing_Standard.md) · §8.
+Runtime checks:
 
----
-
-## Status
-
-NerdKey is in **Phase L1** (self-hosting Keygen CE + the config-driven admin layer). The repository
-is governance-bootstrapped; the approved build plan lives in
-[`implementation_plan.md`](implementation_plan.md) and [`docs/BUILD_BRIEF.md`](docs/BUILD_BRIEF.md).
-Application code is being added under the GodMode workflow.
-
-**Out of scope for L1:** shop/Stripe integration, client SDKs, auto-updates.
-
----
-
-## Security
-
-- Secrets live in `.env` (operator-managed) — **never committed**. `.env.example` stays complete but value-free.
-- **Ed25519 private/signing keys and generated license files are never stored in Git.**
-- Production uses least-privilege database roles; the signing key is kept off the public-facing server.
-
----
-
-## Engine licensing
-
-NerdKey self-hosts **Keygen CE**, which is *free to self-host for personal and commercial projects*
-under the Fair Core License. The only restriction (re-selling Keygen itself as a competing licensing
-SaaS) does not apply to our use. Keygen's source becomes Apache-2.0 two years after release.
-
----
+```bash
+docker compose up -d
+scripts/nerdkey health
+scripts/nerdkey smoke
+```
 
 ## Documentation
 
 | Doc | Purpose |
 |-----|---------|
-| [`docs/BUILD_BRIEF.md`](docs/BUILD_BRIEF.md) | Start here — what NerdKey is, principles, L1 scope, build prompt |
-| [`docs/Nerdsmiths_Licensing_Standard.md`](docs/Nerdsmiths_Licensing_Standard.md) | Company-wide licensing standard & full build plan (L1–L4) |
-| [`docs/Nerdsmiths_ROADMAP.md`](docs/Nerdsmiths_ROADMAP.md) | Overall roadmap & status context |
-| [`AGENTS.md`](AGENTS.md) | Agent/contributor guide, boundaries, validation |
-
----
+| [`docs/BUILD_BRIEF.md`](docs/BUILD_BRIEF.md) | Start here: NerdKey principles, L1 scope, acceptance criteria |
+| [`docs/Nerdsmiths_Licensing_Standard.md`](docs/Nerdsmiths_Licensing_Standard.md) | Company-wide licensing standard and L1-L4 build plan |
+| [`docs/Nerdsmiths_ROADMAP.md`](docs/Nerdsmiths_ROADMAP.md) | Shop and licensing roadmap context |
+| [`docs/ed25519-keys.md`](docs/ed25519-keys.md) | Keygen Ed25519 key handling |
+| [`walkthrough.md`](walkthrough.md) | Tested local L1 setup and validation flow |
+| [`reports/runtime-validation.md`](reports/runtime-validation.md) | Runtime validation and seat-limit evidence |
+| [`reports/static-validation.md`](reports/static-validation.md) | Static validation results |
+| [`AGENTS.md`](AGENTS.md) | Agent/contributor guide |
 
 ## License
 
 Copyright © 2026 Nerdsmiths. All rights reserved. Proprietary — not for redistribution.
 
-📧 **hey@nerdsmiths.de** · 🌐 [nerdsmiths.de](https://nerdsmiths.de)
+hey@nerdsmiths.de · [nerdsmiths.de](https://nerdsmiths.de)
 
 <div align="center">
 

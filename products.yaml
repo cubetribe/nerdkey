@@ -1,0 +1,23 @@
+# NerdKey product registry.
+# One product block plus `python3 scripts/nerdkey.py apply` creates/updates Keygen resources.
+
+products:
+  - slug: nerdsmiths-demo
+    name: Nerdsmiths Demo
+    url: https://nerdsmiths.de
+    platforms:
+      - macOS
+      - Windows
+    license:
+      name: Perpetual 2-seat
+      model: perpetual
+      seats: 2
+      scheme: ED25519_SIGN
+      floating: true
+      strict: true
+      require_fingerprint_scope: true
+      machine_uniqueness_strategy: UNIQUE_PER_LICENSE
+      machine_matching_strategy: MATCH_ALL
+      machine_leasing_strategy: PER_LICENSE
+      overage_strategy: NO_OVERAGE
+      authentication_strategy: LICENSE

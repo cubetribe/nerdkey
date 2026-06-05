@@ -7,6 +7,10 @@ Referenz-Dokumentation für den Nerdsmiths Lizenz-/Aktivierungs-Service.
 | `BUILD_BRIEF.md` | **Hier starten.** Was nerdkey ist, verbindliche Prinzipien, Scope der ersten Session (L1) inkl. Akzeptanzkriterien und Codex-GodMode-Startprompt. |
 | `Nerdsmiths_Licensing_Standard.md` | Firmenweiter Lizenz-Standard 2026: Architektur, Best Practice (Mac+Windows), Engine-Entscheidung (Keygen CE), voller Bauplan L1–L4. |
 | `Nerdsmiths_ROADMAP.md` | Gesamt-Roadmap (Shop + Lizenz-Service-Workstream) als Statuskontext. |
+| `ed25519-keys.md` | Keygen-Ed25519-Keyhandling: Erzeugung beim Setup, Public-Key-Ausgabe, Private-Key-Regeln. |
+| `../walkthrough.md` | Getesteter lokaler L1-Setup- und Validierungsablauf. |
+| `../reports/runtime-validation.md` | Runtime-Validierung inkl. Seat-Limit-Nachweis. |
+| `../reports/static-validation.md` | Statische Validierung der Compose- und Script-Artefakte. |
 
 ## Kernanforderung (oberste Priorität)
 

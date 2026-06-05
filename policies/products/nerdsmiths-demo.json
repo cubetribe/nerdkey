@@ -1,0 +1,35 @@
+{
+  "policy": {
+    "authenticationStrategy": "LICENSE",
+    "duration": null,
+    "expirationStrategy": "RESTRICT_ACCESS",
+    "floating": true,
+    "machineLeasingStrategy": "PER_LICENSE",
+    "machineMatchingStrategy": "MATCH_ALL",
+    "machineUniquenessStrategy": "UNIQUE_PER_LICENSE",
+    "maxMachines": 2,
+    "metadata": {
+      "nerdkeyProduct": "nerdsmiths-demo",
+      "source": "products.yaml"
+    },
+    "name": "Perpetual 2-seat",
+    "overageStrategy": "NO_OVERAGE",
+    "protected": false,
+    "requireFingerprintScope": true,
+    "scheme": "ED25519_SIGN",
+    "strict": true
+  },
+  "product": {
+    "code": "nerdsmiths-demo",
+    "metadata": {
+      "nerdkeyProduct": "nerdsmiths-demo",
+      "source": "products.yaml"
+    },
+    "name": "Nerdsmiths Demo",
+    "platforms": [
+      "macOS",
+      "Windows"
+    ],
+    "url": "https://nerdsmiths.de"
+  }
+}

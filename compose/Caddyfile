@@ -1,0 +1,4 @@
+{$CADDY_HOSTS} {
+	tls internal
+	reverse_proxy web:3000
+}
