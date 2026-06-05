@@ -1,0 +1,22 @@
+.env
+.env.*
+!.env.example
+
+# Local runtime data and generated artifacts
+data/
+tmp/
+backups/
+secrets/
+licenses/
+*.dump
+*.sql
+*.sql.gz
+*.lic
+
+# OS/editor noise
+.DS_Store
+.idea/
+.vscode/
+
+# Logs
+*.log
