@@ -1,0 +1,11 @@
+# Swift build output
+swift/.build/
+swift/*.xcodeproj
+.swiftpm/
+
+# .NET build output
+dotnet/**/bin/
+dotnet/**/obj/
+
+# Local license state written by the example CLI during testing
+*.license.json
