@@ -1,0 +1,78 @@
+# NerdKey production stack for keys.nerdsmiths.de.
+#
+# Differences from docker-compose.yml (local dev):
+#   - No Caddy. TLS terminates at the host NGINX reverse proxy.
+#   - `web` is published on the loopback only (127.0.0.1:3055 -> 3000) so the
+#     container is never directly reachable from the public internet.
+#   - All services use restart policies suitable for an always-on host.
+#
+# Usage on the server (from /opt/nerdkey):
+#   docker compose -f docker-compose.prod.yml up -d postgres redis
+#   # restore the migrated DB into the fresh postgres, then:
+#   docker compose -f docker-compose.prod.yml up -d web worker
+services:
+  web:
+    image: ${KEYGEN_IMAGE:-keygen/api:v1.6}
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    command: web
+    ports:
+      - "127.0.0.1:3055:3000"
+    volumes:
+      - keygen:/etc/keygen
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    image: ${KEYGEN_IMAGE:-keygen/api:v1.6}
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    command: worker
+    volumes:
+      - keygen:/etc/keygen
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17.5
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7.2
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  keygen:
+  postgres:
+  redis:

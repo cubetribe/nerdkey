@@ -4,6 +4,22 @@ All notable user-facing changes to NerdKey are tracked here.
 
 ## [Unreleased]
 
+### Added
+
+- **Production deployment to `https://keys.nerdsmiths.de`** (release impact: `minor`)
+  - `docker-compose.prod.yml`: Keygen CE stack (`web`, `worker`, `postgres`,
+    `redis`) with no Caddy; `web` bound to `127.0.0.1:3055` so TLS terminates at
+    the host NGINX reverse proxy.
+  - `config/nginx/keys.nerdsmiths.de.conf.example`: NGINX vHost template
+    (ACME HTTP-01 via `/var/www/html`, Let's Encrypt TLS, proxy to `127.0.0.1:3055`).
+  - `scripts/prod-backup.sh`: prod-aware `pg_dump` with `0600` dumps, 14-dump
+    retention, and a daily cron entry; preserves the migration dump.
+  - `docs/production-rollout.md`: operator runbook for DB migration, secret
+    rules, two-phase TLS issuance, validation evidence, backups, and rollback.
+  - `.env.example` / `README.md`: production hints and Caddy-vs-NGINX clarification.
+  - Live cutover preserved the embedded account `6ff939de-…` and Ed25519 public
+    key by migrating the local Keygen database and its encryption secrets.
+
 ## [L3] - 2026-06-06
 
 ### Added

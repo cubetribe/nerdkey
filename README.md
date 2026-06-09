@@ -205,6 +205,11 @@ Local defaults:
 
 Production should use a real DNS name, HTTPS certificate, operator-managed secrets, and a managed backup policy.
 
+For the live deployment at `https://keys.nerdsmiths.de`, TLS terminates at the
+host NGINX and Keygen `web` is bound to `127.0.0.1:3055` via
+`docker-compose.prod.yml` — Caddy is local-dev only. Full procedure, secret
+migration rules, and rollback: [`docs/production-rollout.md`](docs/production-rollout.md).
+
 ## Architecture Principles
 
 - Offline-first via Keygen Ed25519 signed license artifacts.
@@ -253,6 +258,7 @@ scripts/nerdkey smoke
 | [`docs/Nerdsmiths_Licensing_Standard.md`](docs/Nerdsmiths_Licensing_Standard.md) | Company-wide licensing standard and L1-L4 build plan |
 | [`docs/Nerdsmiths_ROADMAP.md`](docs/Nerdsmiths_ROADMAP.md) | Shop and licensing roadmap context |
 | [`docs/ed25519-keys.md`](docs/ed25519-keys.md) | Keygen Ed25519 key handling |
+| [`docs/production-rollout.md`](docs/production-rollout.md) | Production deploy to keys.nerdsmiths.de: TLS/NGINX, DB migration, backups, rollback |
 | [`walkthrough.md`](walkthrough.md) | Tested local L1 setup and validation flow |
 | [`reports/runtime-validation.md`](reports/runtime-validation.md) | Runtime validation and seat-limit evidence |
 | [`reports/static-validation.md`](reports/static-validation.md) | Static validation results |
